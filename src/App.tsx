@@ -41,12 +41,22 @@ const INITIAL_INPUT: NisaSimulatorInput = {
 export function App() {
   const [input, setInput] = useState<NisaSimulatorInput>(INITIAL_INPUT);
 
+  // カンマ区切りフォーマット用ヘルパー
+  const formatNumberWithCommas = (val: number | '') => {
+    if (val === '' || isNaN(Number(val))) return '';
+    return Number(val).toLocaleString();
+  };
+
   const handleInputChange = (
     section: 'top' | 'sp500' | 'gold' | 'nasdaq100',
     field: string,
     value: string
   ) => {
-    const parsedValue = value === '' ? '' : Number(value);
+    // カンマを除去して数値化
+    const rawValue = value.replace(/,/g, '');
+    const parsedValue = rawValue === '' ? '' : Number(rawValue);
+
+    if (isNaN(parsedValue as number)) return;
 
     if (section === 'top') {
       setInput((prev) => ({ ...prev, [field]: parsedValue }));
@@ -111,7 +121,6 @@ export function App() {
           <h2 style={{ fontSize: '16px', margin: 0 }}>
             前提条件
           </h2>
-          {/* リセットボタン */}
           <button
             onClick={handleReset}
             style={{
@@ -196,18 +205,20 @@ export function App() {
                 <td style={{ padding: '8px', border: '1px solid #ccc', fontWeight: 'bold' }}>{asset.name}</td>
                 <td style={{ padding: '8px', border: '1px solid #ccc' }}>
                   <input
-                    type="number"
-                    placeholder="例: 1000000"
-                    value={input[asset.key].currentValue}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="例: 1,000,000"
+                    value={formatNumberWithCommas(input[asset.key].currentValue)}
                     onChange={(e) => handleInputChange(asset.key, 'currentValue', e.target.value)}
                     style={{ width: '100%', padding: '6px' }}
                   />
                 </td>
                 <td style={{ padding: '8px', border: '1px solid #ccc' }}>
                   <input
-                    type="number"
-                    placeholder="例: 200000"
-                    value={input[asset.key].currentProfit}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="例: 200,000"
+                    value={formatNumberWithCommas(input[asset.key].currentProfit)}
                     onChange={(e) => handleInputChange(asset.key, 'currentProfit', e.target.value)}
                     style={{ width: '100%', padding: '6px' }}
                   />
@@ -256,9 +267,10 @@ export function App() {
                   <div>
                     <label style={{ fontSize: '11px', color: '#666', display: 'block', marginBottom: '2px' }}>保有金額(円)</label>
                     <input
-                      type="number"
-                      placeholder="例: 1000000"
-                      value={data.currentValue}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="例: 1,000,000"
+                      value={formatNumberWithCommas(data.currentValue)}
                       onChange={(e) => handleInputChange(asset.key, 'currentValue', e.target.value)}
                       style={{ width: '100%', padding: '6px 4px', border: '1px solid #ccc', borderRadius: '4px' }}
                     />
@@ -266,9 +278,10 @@ export function App() {
                   <div>
                     <label style={{ fontSize: '11px', color: '#666', display: 'block', marginBottom: '2px' }}>評価損益(円)</label>
                     <input
-                      type="number"
-                      placeholder="例: 200000"
-                      value={data.currentProfit}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="例: 200,000"
+                      value={formatNumberWithCommas(data.currentProfit)}
                       onChange={(e) => handleInputChange(asset.key, 'currentProfit', e.target.value)}
                       style={{ width: '100%', padding: '6px 4px', border: '1px solid #ccc', borderRadius: '4px' }}
                     />
