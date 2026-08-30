@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -355,7 +355,10 @@ export function App() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="age" unit="歳" />
               <YAxis tickFormatter={(val) => `${Math.round(val / 10000)}万`} />
-              <Tooltip formatter={(value: number) => [`${value.toLocaleString()} 円`]} labelFormatter={(label) => `${label}歳`} />
+              <Tooltip
+                formatter={(value) => [value != null ? `${Number(value).toLocaleString()} 円` : '0 円']}
+                labelFormatter={(label) => `${label}歳`}
+              />
               <Legend />
               <Bar dataKey="sp500Evaluation" name="S&P500" stackId="a" fill="#8884d8" />
               <Bar dataKey="goldEvaluation" name="ゴールド" stackId="a" fill="#ffc658" />
