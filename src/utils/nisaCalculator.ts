@@ -61,7 +61,12 @@ export function calculateNisaSimulator(input: NisaSimulatorInput) {
     const totalMonthsAtLimit = currentTotalMonths + monthsToReachLimit;
     const ageAtLimit = Math.floor(totalMonthsAtLimit / 12);
     const monthsAtLimit = totalMonthsAtLimit % 12;
-    nisaLimitReachedAgeText = `${ageAtLimit}歳${monthsAtLimit}か月`;
+
+    if (ageAtLimit >= 100) {
+      nisaLimitReachedAgeText = '100歳超（未到達）';
+    } else {
+      nisaLimitReachedAgeText = `${ageAtLimit}歳${monthsAtLimit}か月`;
+    }
   }
 
   const additionalInvestmentNoLimit = monthlyTotalAmount * totalMonthsToTarget;

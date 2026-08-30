@@ -9,34 +9,37 @@ import {
   Legend,
   CartesianGrid,
 } from 'recharts';
-import { Calculator, ShieldCheck, PieChart, Table as TableIcon } from 'lucide-react';
+import { Calculator, ShieldCheck, PieChart, Table as TableIcon, RotateCcw } from 'lucide-react';
 import { calculateNisaSimulator } from './utils/nisaCalculator';
 import type { NisaSimulatorInput } from './utils/nisaCalculator';
 
+// 初期値の定義
+const INITIAL_INPUT: NisaSimulatorInput = {
+  currentAgeYears: 35,
+  currentAgeMonths: 0,
+  targetAgeYears: 60,
+  sp500: {
+    currentValue: '',
+    currentProfit: '',
+    monthlyAmount: 0,
+    annualReturn: 5,
+  },
+  gold: {
+    currentValue: '',
+    currentProfit: '',
+    monthlyAmount: 0,
+    annualReturn: 3,
+  },
+  nasdaq100: {
+    currentValue: '',
+    currentProfit: '',
+    monthlyAmount: 0,
+    annualReturn: 7,
+  },
+};
+
 export function App() {
-  const [input, setInput] = useState<NisaSimulatorInput>({
-    currentAgeYears: 35,
-    currentAgeMonths: 0,
-    targetAgeYears: 60,
-    sp500: {
-      currentValue: '',
-      currentProfit: '',
-      monthlyAmount: 0,
-      annualReturn: 5,
-    },
-    gold: {
-      currentValue: '',
-      currentProfit: '',
-      monthlyAmount: 0,
-      annualReturn: 3,
-    },
-    nasdaq100: {
-      currentValue: '',
-      currentProfit: '',
-      monthlyAmount: 0,
-      annualReturn: 7,
-    },
-  });
+  const [input, setInput] = useState<NisaSimulatorInput>(INITIAL_INPUT);
 
   const handleInputChange = (
     section: 'top' | 'sp500' | 'gold' | 'nasdaq100',
@@ -55,6 +58,13 @@ export function App() {
           [field]: parsedValue,
         },
       }));
+    }
+  };
+
+  // リセット処理
+  const handleReset = () => {
+    if (window.confirm('入力内容を初期状態に戻しますか？')) {
+      setInput(INITIAL_INPUT);
     }
   };
 
@@ -97,9 +107,29 @@ export function App() {
 
       {/* ■ 前提条件 */}
       <section style={{ background: '#f8f9fa', padding: '12px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e0e0e0', width: '100%' }}>
-        <h2 style={{ fontSize: '16px', marginTop: 0, borderBottom: '1px solid #ccc', paddingBottom: '6px' }}>
-          前提条件
-        </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', paddingBottom: '6px', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: '16px', margin: 0 }}>
+            前提条件
+          </h2>
+          {/* リセットボタン */}
+          <button
+            onClick={handleReset}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              fontSize: '12px',
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              color: '#666'
+            }}
+          >
+            <RotateCcw size={14} /> リセット
+          </button>
+        </div>
 
         {/* 現在年齢・目標年齢 */}
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
@@ -368,9 +398,7 @@ export function App() {
                 formatter={(value) => [value != null ? `${Number(value).toLocaleString()} 円` : '0 円']}
                 labelFormatter={(label) => `${label}歳`}
               />
-              {/* payloadの直接指定を外します */}
               <Legend wrapperStyle={{ fontSize: '12px' }} />
-              {/* Barの順番通りに凡例も並びます */}
               <Bar dataKey="sp500Evaluation" name="S&P500" stackId="a" fill="#8884d8" />
               <Bar dataKey="goldEvaluation" name="ゴールド" stackId="a" fill="#ffc658" />
               <Bar dataKey="nasdaq100Evaluation" name="NASDAQ100" stackId="a" fill="#82ca9d" />
