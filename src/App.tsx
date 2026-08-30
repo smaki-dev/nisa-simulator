@@ -347,12 +347,12 @@ export function App() {
       {/* ■ 資産推移グラフ */}
       <section style={{ marginBottom: '24px', width: '100%' }}>
         <h2 style={{ fontSize: '16px' }}>資産推移グラフ</h2>
-        <div style={{ width: '100%', height: '280px', marginLeft: '-15px' }}>
+        <div style={{ width: '100%', height: '280px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={yearlyResults} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={yearlyResults} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="age" unit="歳" fontSize={11} />
-              <YAxis tickFormatter={(val) => `${Math.round(val / 10000)}万`} fontSize={10} width={40} />
+              <YAxis tickFormatter={(val) => `${Math.round(val / 10000)}万`} fontSize={10} width={50} />
               <Tooltip
                 formatter={(value) => [value != null ? `${Number(value).toLocaleString()} 円` : '0 円']}
                 labelFormatter={(label) => `${label}歳`}
