@@ -17,6 +17,7 @@ export function App() {
   const [input, setInput] = useState<NisaSimulatorInput>({
     currentAgeYears: 35,
     currentAgeMonths: 0,
+    targetAgeYears: 60,
     sp500: {
       currentValue: '',
       currentProfit: '',
@@ -72,19 +73,15 @@ export function App() {
 
   return (
     <div style={{ maxWidth: '1000px', width: '100%', margin: '0 auto', padding: '12px', fontFamily: 'sans-serif', color: '#333', boxSizing: 'border-box', overflowX: 'hidden' }}>
-      {/* 画面幅に応じた切り替え用CSS */}
       <style>{`
-        /* 全要素のボックスサイズ固定 */
         *, *:before, *:after {
           box-sizing: border-box !important;
         }
 
-        /* スマホ時の入力フォーム自動ズーム防止 */
         input, select {
           font-size: 16px !important;
         }
 
-        /* PC / スマホ 表示切り替え */
         .desktop-only-table { display: table !important; }
         .mobile-only-cards { display: none !important; }
 
@@ -98,20 +95,20 @@ export function App() {
         <Calculator color="#2196f3" /> NISA資産形成シミュレーター
       </h1>
 
-      {/* ■ 前提条件（入力フォーム） */}
+      {/* ■ 前提条件 */}
       <section style={{ background: '#f8f9fa', padding: '12px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e0e0e0', width: '100%' }}>
         <h2 style={{ fontSize: '16px', marginTop: 0, borderBottom: '1px solid #ccc', paddingBottom: '6px' }}>
           前提条件
         </h2>
 
-        {/* 基本情報（年齢・月数） */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>現在年齢：</label>
+        {/* 現在年齢・目標年齢 */}
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <label style={{ fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>現在：</label>
             <select
               value={input.currentAgeYears}
               onChange={(e) => handleInputChange('top', 'currentAgeYears', e.target.value)}
-              style={{ padding: '6px', minWidth: '70px' }}
+              style={{ padding: '6px' }}
             >
               {Array.from({ length: 43 }, (_, i) => i + 18).map((age) => (
                 <option key={age} value={age}>
@@ -122,7 +119,7 @@ export function App() {
             <select
               value={input.currentAgeMonths}
               onChange={(e) => handleInputChange('top', 'currentAgeMonths', e.target.value)}
-              style={{ padding: '6px', minWidth: '70px' }}
+              style={{ padding: '6px' }}
             >
               {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                 <option key={m} value={m}>
@@ -132,12 +129,27 @@ export function App() {
             </select>
           </div>
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <label style={{ fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>目標：</label>
+            <select
+              value={input.targetAgeYears ?? 60}
+              onChange={(e) => handleInputChange('top', 'targetAgeYears', e.target.value)}
+              style={{ padding: '6px' }}
+            >
+              {Array.from({ length: 31 }, (_, i) => i + 45).map((age) => (
+                <option key={age} value={age} disabled={age <= input.currentAgeYears}>
+                  {age}歳
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ padding: '6px 10px', background: '#e3f2fd', borderRadius: '4px', fontWeight: 'bold', fontSize: '13px', width: '100%', textAlign: 'center' }}>
-            60歳まで： {summary.yearsTo60Display} （{summary.totalMonthsTo60}か月）
+            {summary.targetAge}歳まで： {summary.yearsToTargetDisplay} （{summary.totalMonthsToTarget}か月）
           </div>
         </div>
 
-        {/* 【PC用】テーブル表示 */}
+        {/* PC用テーブル */}
         <table className="desktop-only-table" style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff', marginBottom: '16px', tableLayout: 'fixed' }}>
           <thead>
             <tr style={{ background: '#eee', textAlign: 'left' }}>
@@ -201,7 +213,7 @@ export function App() {
           </tbody>
         </table>
 
-        {/* 【スマホ用】完全に崩れないカード型レイアウト */}
+        {/* スマホ用カード */}
         <div className="mobile-only-cards" style={{ flexDirection: 'column', gap: '10px', marginBottom: '16px', width: '100%' }}>
           {assets.map((asset) => {
             const data = input[asset.key];
@@ -210,7 +222,6 @@ export function App() {
                 <div style={{ fontWeight: 'bold', borderBottom: '1px solid #eee', paddingBottom: '4px', marginBottom: '8px', color: '#1976d2', fontSize: '14px' }}>
                   {asset.name}
                 </div>
-                {/* テーブルを使わず、2列の固定幅グリッドで絶対にがたつかない構造にする */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'calc(50% - 4px) calc(50% - 4px)', gap: '8px', width: '100%' }}>
                   <div>
                     <label style={{ fontSize: '11px', color: '#666', display: 'block', marginBottom: '2px' }}>保有金額(円)</label>
@@ -266,18 +277,18 @@ export function App() {
           })}
         </div>
 
-        {/* サマリー表示 */}
+        {/* サマリー */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <div style={{ padding: '8px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', fontSize: '11px' }}>
             毎月の積立合計： <br /><strong style={{ fontSize: '13px' }}>{(summary.monthlyTotalAmount / 10000).toLocaleString()} 万円</strong>
           </div>
           <div style={{ padding: '8px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', fontSize: '11px' }}>
-            枠使用率（60歳時点）： <br /><strong style={{ fontSize: '13px' }}>{summary.nisaUsageRateAt60}%</strong>
+            枠使用率（{summary.targetAge}歳時点）： <br /><strong style={{ fontSize: '13px' }}>{summary.nisaUsageRateAtTarget}%</strong>
           </div>
         </div>
       </section>
 
-      {/* ■ NISA生涯投資枠1,800万円の使用状況 */}
+      {/* ■ NISA生涯投資枠 */}
       <section style={{ background: '#e8f5e9', padding: '12px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #c8e6c9', width: '100%' }}>
         <h2 style={{ fontSize: '15px', marginTop: 0, color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <ShieldCheck size={18} /> NISA生涯投資枠（1,800万円）
@@ -296,16 +307,16 @@ export function App() {
             <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#d84315' }}>{summary.nisaLimitReachedAgeText}</div>
           </div>
           <div style={{ background: '#fff', padding: '8px', borderRadius: '6px', border: '1px solid #a5d6a7' }}>
-            <div style={{ fontSize: '10px', color: '#666' }}>60歳累計買付額</div>
-            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{summary.totalInvestmentAt60.toLocaleString()} 円</div>
+            <div style={{ fontSize: '10px', color: '#666' }}>{summary.targetAge}歳累計買付額</div>
+            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{summary.totalInvestmentAtTarget.toLocaleString()} 円</div>
           </div>
         </div>
       </section>
 
-      {/* ■ 60歳までの積立・運用結果 */}
+      {/* ■ 運用結果 */}
       <section style={{ background: '#fff3e0', padding: '12px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #ffe0b2', width: '100%' }}>
         <h2 style={{ fontSize: '15px', marginTop: 0, color: '#e65100', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <PieChart size={18} /> 60歳時点の結果
+          <PieChart size={18} /> {summary.targetAge}歳時点の資産成果
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
           <div style={{ background: '#fff', padding: '8px', borderRadius: '6px' }}>
@@ -313,16 +324,16 @@ export function App() {
             <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{summary.additionalInvestment.toLocaleString()} 円</div>
           </div>
           <div style={{ background: '#fff', padding: '8px', borderRadius: '6px' }}>
-            <div style={{ fontSize: '10px', color: '#666' }}>60歳累計買付額</div>
-            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{summary.totalInvestmentAt60.toLocaleString()} 円</div>
+            <div style={{ fontSize: '10px', color: '#666' }}>{summary.targetAge}歳累計買付額</div>
+            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{summary.totalInvestmentAtTarget.toLocaleString()} 円</div>
           </div>
           <div style={{ background: '#fff', padding: '8px', borderRadius: '6px', gridColumn: '1 / -1' }}>
-            <div style={{ fontSize: '11px', color: '#666' }}>60歳時点の合計評価額</div>
+            <div style={{ fontSize: '11px', color: '#666' }}>{summary.targetAge}歳時点の合計評価額</div>
             <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1565c0' }}>
-              {summary.totalEvaluationAt60.toLocaleString()} 円
+              {summary.totalEvaluationAtTarget.toLocaleString()} 円
             </div>
             <div style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 'bold' }}>
-              運用益: +{(summary.totalEvaluationAt60 - summary.totalInvestmentAt60).toLocaleString()} 円
+              運用益: +{(summary.totalEvaluationAtTarget - summary.totalInvestmentAtTarget).toLocaleString()} 円
             </div>
           </div>
         </div>
@@ -331,15 +342,15 @@ export function App() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
           <div style={{ background: '#fff', padding: '6px 2px', borderRadius: '6px', textAlign: 'center' }}>
             <div style={{ fontSize: '10px', color: '#666' }}>S&P500</div>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#8884d8' }}>{summary.sp500At60.toLocaleString()}円</div>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#8884d8' }}>{summary.sp500AtTarget.toLocaleString()}円</div>
           </div>
           <div style={{ background: '#fff', padding: '6px 2px', borderRadius: '6px', textAlign: 'center' }}>
             <div style={{ fontSize: '10px', color: '#666' }}>ゴールド</div>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#e6a100' }}>{summary.goldAt60.toLocaleString()}円</div>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#e6a100' }}>{summary.goldAtTarget.toLocaleString()}円</div>
           </div>
           <div style={{ background: '#fff', padding: '6px 2px', borderRadius: '6px', textAlign: 'center' }}>
             <div style={{ fontSize: '10px', color: '#666' }}>NASDAQ100</div>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#82ca9d' }}>{summary.nasdaq100At60.toLocaleString()}円</div>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#82ca9d' }}>{summary.nasdaq100AtTarget.toLocaleString()}円</div>
           </div>
         </div>
       </section>
@@ -357,7 +368,14 @@ export function App() {
                 formatter={(value) => [value != null ? `${Number(value).toLocaleString()} 円` : '0 円']}
                 labelFormatter={(label) => `${label}歳`}
               />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Legend
+                wrapperStyle={{ fontSize: '12px' }}
+                payload={[
+                  { value: 'S&P500', type: 'rect', color: '#8884d8' },
+                  { value: 'ゴールド', type: 'rect', color: '#ffc658' },
+                  { value: 'NASDAQ100', type: 'rect', color: '#82ca9d' },
+                ]}
+              />
               <Bar dataKey="sp500Evaluation" name="S&P500" stackId="a" fill="#8884d8" />
               <Bar dataKey="goldEvaluation" name="ゴールド" stackId="a" fill="#ffc658" />
               <Bar dataKey="nasdaq100Evaluation" name="NASDAQ100" stackId="a" fill="#82ca9d" />
@@ -366,7 +384,7 @@ export function App() {
         </div>
       </section>
 
-      {/* ■ 一覧テーブル */}
+      {/* ■ 年別資産推移 */}
       <section style={{ width: '100%' }}>
         <h2 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <TableIcon size={18} /> 年別資産推移

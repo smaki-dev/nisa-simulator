@@ -1,220 +1,152 @@
-// 資産（銘柄）ごとの入力データ構造
 export interface AssetInput {
-    currentValue: number | '';  // 現在の保有金額（円）
-    currentProfit: number | ''; // 現在の評価損益（円）
-    monthlyAmount: number;      // 月積立額（円）
-    annualReturn: number;       // 想定年率（%）
+  currentValue: number | '';
+  currentProfit: number | '';
+  monthlyAmount: number;
+  annualReturn: number;
 }
 
-// 全体の入力データ構造
 export interface NisaSimulatorInput {
-    currentAgeYears: number;   // 現在年齢（歳）
-    currentAgeMonths: number;  // 現在年齢（月：0〜11）
-    sp500: AssetInput;
-    gold: AssetInput;
-    nasdaq100: AssetInput;
+  currentAgeYears: number;
+  currentAgeMonths: number;
+  targetAgeYears?: number;
+  sp500: AssetInput;
+  gold: AssetInput;
+  nasdaq100: AssetInput;
 }
 
-// 年次の計算結果
 export interface YearlyResult {
-    year: number;              // 経過年
-    age: number;               // 年齢
-    sp500Evaluation: number;   // S&P500 評価額
-    goldEvaluation: number;    // ゴールド 評価額
-    nasdaq100Evaluation: number; // NASDAQ100 評価額
-    totalEvaluation: number;  // 合計評価額
-    totalInvestment: number;  // 累計買付額（元本）
+  year: number;
+  age: number;
+  sp500Evaluation: number;
+  goldEvaluation: number;
+  nasdaq100Evaluation: number;
+  totalEvaluation: number;
+  totalInvestment: number;
 }
 
-// 最終（60歳時点）のサマリー結果
-export interface NisaSummary {
-    yearsTo60Display: string;           // 例: 24年6か月
-    totalMonthsTo60: number;            // 60歳までの総月数
-    currentTotalValue: number;          // 現在の保有金額（合計）
-    currentTotalProfit: number;         // 現在の評価損益（合計）
-    currentTotalInvestment: number;     // 現在の推定買付額（元本合計）
-    monthlyTotalAmount: number;         // 毎月の積立合計
-    additionalInvestment: number;       // これからの追加積立額
-    totalInvestmentAt60: number;        // 60歳時点の累計買付額
-    sp500At60: number;                  // 60歳時点のS&P500評価額
-    goldAt60: number;                   // 60歳時点のゴールド評価額
-    nasdaq100At60: number;              // 60歳時点のNASDAQ100評価額
-    totalEvaluationAt60: number;        // 60歳時点の合計評価額
-    remainingNisaLimit: number;         // NISA残り枠（現在時点）
-    nisaUsageRateAt60: number;          // NISA生涯枠使用率（60歳時点 %）
-    nisaLimitReachedAgeText: string;    // NISA枠1800万円到達予想
-}
+export function calculateNisaSimulator(input: NisaSimulatorInput) {
+  const targetAge = input.targetAgeYears ?? 60;
+  const currentTotalMonths = input.currentAgeYears * 12 + input.currentAgeMonths;
+  const targetTotalMonths = targetAge * 12;
+  const totalMonthsToTarget = Math.max(0, targetTotalMonths - currentTotalMonths);
 
-const NISA_MAX_LIMIT = 18000000; // 生涯投資枠：1,800万円
+  const yearsToTargetDisplay = `${Math.floor(totalMonthsToTarget / 12)}年${totalMonthsToTarget % 12}か月`;
 
-// 空文字を 0 に安全変換するヘルパー関数
-const safeVal = (val: number | ''): number => (val === '' || isNaN(val) ? 0 : val);
+  const sp500Val = Number(input.sp500.currentValue) || 0;
+  const sp500Prof = Number(input.sp500.currentProfit) || 0;
+  const goldVal = Number(input.gold.currentValue) || 0;
+  const goldProf = Number(input.gold.currentProfit) || 0;
+  const nasdaqVal = Number(input.nasdaq100.currentValue) || 0;
+  const nasdaqProf = Number(input.nasdaq100.currentProfit) || 0;
 
-/**
- * NISAシミュレーション計算メイン関数
- */
-export const calculateNisaSimulator = (
-    input: NisaSimulatorInput
-): { yearlyResults: YearlyResult[]; summary: NisaSummary } => {
-    // 60歳（720か月）までの残り月数計算
-    const currentTotalMonths = input.currentAgeYears * 12 + input.currentAgeMonths;
-    const targetTotalMonths = 60 * 12; // 720か月
-    const totalMonthsTo60 = Math.max(0, targetTotalMonths - currentTotalMonths);
+  const currentTotalValue = sp500Val + goldVal + nasdaqVal;
+  const currentTotalProfit = sp500Prof + goldProf + nasdaqProf;
+  const currentTotalInvestment = Math.max(0, currentTotalValue - currentTotalProfit);
 
-    const yearsTo60 = Math.floor(totalMonthsTo60 / 12);
-    const remMonthsTo60 = totalMonthsTo60 % 12;
-    const yearsTo60Display = `${yearsTo60}年${remMonthsTo60}か月`;
+  const monthlyTotalAmount =
+    input.sp500.monthlyAmount + input.gold.monthlyAmount + input.nasdaq100.monthlyAmount;
 
-    // 各銘柄の保有金額と評価損益
-    const sp500Val = safeVal(input.sp500.currentValue);
-    const sp500Profit = safeVal(input.sp500.currentProfit);
-    const goldVal = safeVal(input.gold.currentValue);
-    const goldProfit = safeVal(input.gold.currentProfit);
-    const nasdaq100Val = safeVal(input.nasdaq100.currentValue);
-    const nasdaq100Profit = safeVal(input.nasdaq100.currentProfit);
+  const NISA_LIMIT = 18000000;
+  const remainingNisaLimit = Math.max(0, NISA_LIMIT - currentTotalInvestment);
 
-    // 買付額（元本） = 保有金額 - 評価損益
-    const sp500Inv = Math.max(0, sp500Val - sp500Profit);
-    const goldInv = Math.max(0, goldVal - goldProfit);
-    const nasdaq100Inv = Math.max(0, nasdaq100Val - nasdaq100Profit);
+  let monthsToReachLimit = -1;
+  if (monthlyTotalAmount > 0) {
+    monthsToReachLimit = Math.ceil(remainingNisaLimit / monthlyTotalAmount);
+  }
 
-    // 現在の合計
-    const currentTotalValue = sp500Val + goldVal + nasdaq100Val;
-    const currentTotalProfit = sp500Profit + goldProfit + nasdaq100Profit;
-    const currentTotalInvestment = sp500Inv + goldInv + nasdaq100Inv;
+  let nisaLimitReachedAgeText = '未到達';
+  if (remainingNisaLimit === 0) {
+    nisaLimitReachedAgeText = '到達済み';
+  } else if (monthsToReachLimit > 0) {
+    const totalMonthsAtLimit = currentTotalMonths + monthsToReachLimit;
+    const ageAtLimit = Math.floor(totalMonthsAtLimit / 12);
+    const monthsAtLimit = totalMonthsAtLimit % 12;
+    nisaLimitReachedAgeText = `${ageAtLimit}歳${monthsAtLimit}か月`;
+  }
 
-    const initialMonthlyTotal =
-        input.sp500.monthlyAmount +
-        input.gold.monthlyAmount +
-        input.nasdaq100.monthlyAmount;
+  const additionalInvestmentNoLimit = monthlyTotalAmount * totalMonthsToTarget;
+  const additionalInvestment = Math.min(additionalInvestmentNoLimit, remainingNisaLimit);
+  const totalInvestmentAtTarget = currentTotalInvestment + additionalInvestment;
+  const nisaUsageRateAtTarget = Math.min(
+    100,
+    Math.round((totalInvestmentAtTarget / NISA_LIMIT) * 100)
+  );
 
-    // 月利
-    const sp500MonthlyRate = input.sp500.annualReturn / 100 / 12;
-    const goldMonthlyRate = input.gold.annualReturn / 100 / 12;
-    const nasdaq100MonthlyRate = input.nasdaq100.annualReturn / 100 / 12;
+  const yearsCount = Math.max(1, targetAge - input.currentAgeYears);
+  const yearlyResults: YearlyResult[] = [];
 
-    // 状態追跡用変数
-    let currentSp500Eval = sp500Val;
-    let currentGoldEval = goldVal;
-    let currentNasdaqEval = nasdaq100Val;
+  let sp500Eval = sp500Val;
+  let goldEval = goldVal;
+  let nasdaqEval = nasdaqVal;
+  let currentAccumulatedInv = currentTotalInvestment;
 
-    let currentCumulatedInvestment = currentTotalInvestment;
-    let additionalInvestmentTotal = 0;
+  for (let year = 1; year <= yearsCount; year++) {
+    const displayAge = input.currentAgeYears + year;
 
-    let reachedMonth: number | null = null;
+    for (let m = 1; m <= 12; m++) {
+      if (currentAccumulatedInv < NISA_LIMIT) {
+        const canInvest = NISA_LIMIT - currentAccumulatedInv;
+        const actualSp500 = Math.min(input.sp500.monthlyAmount, canInvest);
+        sp500Eval = (sp500Eval + actualSp500) * (1 + input.sp500.annualReturn / 100 / 12);
+        currentAccumulatedInv += actualSp500;
 
-    const yearlyResults: YearlyResult[] = [];
+        const canInvestGold = NISA_LIMIT - currentAccumulatedInv;
+        const actualGold = Math.min(input.gold.monthlyAmount, canInvestGold);
+        goldEval = (goldEval + actualGold) * (1 + input.gold.annualReturn / 100 / 12);
+        currentAccumulatedInv += actualGold;
 
-    // 初期状態（0年目）を保存
+        const canInvestNasdaq = NISA_LIMIT - currentAccumulatedInv;
+        const actualNasdaq = Math.min(input.nasdaq100.monthlyAmount, canInvestNasdaq);
+        nasdaqEval = (nasdaqEval + actualNasdaq) * (1 + input.nasdaq100.annualReturn / 100 / 12);
+        currentAccumulatedInv += actualNasdaq;
+      } else {
+        sp500Eval *= 1 + input.sp500.annualReturn / 100 / 12;
+        goldEval *= 1 + input.gold.annualReturn / 100 / 12;
+        nasdaqEval *= 1 + input.nasdaq100.annualReturn / 100 / 12;
+      }
+    }
+
+    const roundedSp500 = Math.round(sp500Eval);
+    const roundedGold = Math.round(goldEval);
+    const roundedNasdaq = Math.round(nasdaqEval);
+    const totalEval = roundedSp500 + roundedGold + roundedNasdaq;
+
     yearlyResults.push({
-        year: 0,
-        age: input.currentAgeYears,
-        sp500Evaluation: Math.round(currentSp500Eval),
-        goldEvaluation: Math.round(currentGoldEval),
-        nasdaq100Evaluation: Math.round(currentNasdaqEval),
-        totalEvaluation: Math.round(currentSp500Eval + currentGoldEval + currentNasdaqEval),
-        totalInvestment: Math.round(currentCumulatedInvestment),
+      year,
+      age: displayAge,
+      sp500Evaluation: roundedSp500,
+      goldEvaluation: roundedGold,
+      nasdaq100Evaluation: roundedNasdaq,
+      totalEvaluation: totalEval,
+      totalInvestment: Math.round(currentAccumulatedInv),
     });
+  }
 
-    // 月単位で運用・積立計算
-    for (let month = 1; month <= totalMonthsTo60; month++) {
-        const isLimitReached = currentCumulatedInvestment >= NISA_MAX_LIMIT;
+  const lastResult = yearlyResults[yearlyResults.length - 1] || {
+    sp500Evaluation: sp500Val,
+    goldEvaluation: goldVal,
+    nasdaq100Evaluation: nasdaqVal,
+    totalEvaluation: currentTotalValue,
+    totalInvestment: currentTotalInvestment,
+  };
 
-        if (isLimitReached && reachedMonth === null) {
-            reachedMonth = month - 1;
-        }
-
-        let addSp500 = 0;
-        let addGold = 0;
-        let addNasdaq = 0;
-
-        if (!isLimitReached) {
-            const room = NISA_MAX_LIMIT - currentCumulatedInvestment;
-            const plannedMonthlyTotal =
-                input.sp500.monthlyAmount +
-                input.gold.monthlyAmount +
-                input.nasdaq100.monthlyAmount;
-
-            if (plannedMonthlyTotal > 0) {
-                if (plannedMonthlyTotal <= room) {
-                    addSp500 = input.sp500.monthlyAmount;
-                    addGold = input.gold.monthlyAmount;
-                    addNasdaq = input.nasdaq100.monthlyAmount;
-                } else {
-                    const ratio = room / plannedMonthlyTotal;
-                    addSp500 = input.sp500.monthlyAmount * ratio;
-                    addGold = input.gold.monthlyAmount * ratio;
-                    addNasdaq = input.nasdaq100.monthlyAmount * ratio;
-                }
-            }
-        }
-
-        const monthlyAdded = addSp500 + addGold + addNasdaq;
-        currentCumulatedInvestment += monthlyAdded;
-        additionalInvestmentTotal += monthlyAdded;
-
-        // 複利運用処理
-        currentSp500Eval = (currentSp500Eval + addSp500) * (1 + sp500MonthlyRate);
-        currentGoldEval = (currentGoldEval + addGold) * (1 + goldMonthlyRate);
-        currentNasdaqEval = (currentNasdaqEval + addNasdaq) * (1 + nasdaq100MonthlyRate);
-
-        // 1年（12ヶ月）ごと、または最終月
-        if (month % 12 === 0) {
-            const year = month / 12;
-            yearlyResults.push({
-                year,
-                age: input.currentAgeYears + year,
-                sp500Evaluation: Math.round(currentSp500Eval),
-                goldEvaluation: Math.round(currentGoldEval),
-                nasdaq100Evaluation: Math.round(currentNasdaqEval),
-                totalEvaluation: Math.round(
-                    currentSp500Eval + currentGoldEval + currentNasdaqEval
-                ),
-                totalInvestment: Math.round(currentCumulatedInvestment),
-            });
-        }
-    }
-
-    // NISA枠到達年齢の判定
-    let nisaLimitReachedAgeText = '60歳までに未到達';
-    if (currentTotalInvestment >= NISA_MAX_LIMIT) {
-        nisaLimitReachedAgeText = 'すでに上限（1,800万円）到達済み';
-    } else if (reachedMonth !== null) {
-        const totalReachedMonths = currentTotalMonths + reachedMonth;
-        const reachedYears = Math.floor(totalReachedMonths / 12);
-        const reachedMonthsRem = totalReachedMonths % 12;
-        nisaLimitReachedAgeText = `約${reachedYears}歳${reachedMonthsRem}か月`;
-    } else if (currentCumulatedInvestment >= NISA_MAX_LIMIT) {
-        // 【追加】60歳ちょうど（最終月）で1,800万円に達した場合の判定
-        nisaLimitReachedAgeText = '60歳0か月';
-    }
-
-    const totalEvaluationAt60 = Math.round(
-        currentSp500Eval + currentGoldEval + currentNasdaqEval
-    );
-
-    const nisaUsageRateAt60 = Math.min(
-        100,
-        Number(((currentCumulatedInvestment / NISA_MAX_LIMIT) * 100).toFixed(1))
-    );
-
-    const summary: NisaSummary = {
-        yearsTo60Display,
-        totalMonthsTo60,
-        currentTotalValue,
-        currentTotalProfit,
-        currentTotalInvestment,
-        monthlyTotalAmount: initialMonthlyTotal,
-        additionalInvestment: Math.round(additionalInvestmentTotal),
-        totalInvestmentAt60: Math.round(currentCumulatedInvestment),
-        sp500At60: Math.round(currentSp500Eval),
-        goldAt60: Math.round(currentGoldEval),
-        nasdaq100At60: Math.round(currentNasdaqEval),
-        totalEvaluationAt60,
-        remainingNisaLimit: Math.max(0, NISA_MAX_LIMIT - currentTotalInvestment),
-        nisaUsageRateAt60,
-        nisaLimitReachedAgeText,
-    };
-
-    return { yearlyResults, summary };
-};
+  return {
+    yearlyResults,
+    summary: {
+      targetAge,
+      yearsToTargetDisplay,
+      totalMonthsToTarget,
+      monthlyTotalAmount,
+      currentTotalInvestment,
+      remainingNisaLimit,
+      nisaLimitReachedAgeText,
+      additionalInvestment,
+      totalInvestmentAtTarget,
+      nisaUsageRateAtTarget,
+      totalEvaluationAtTarget: lastResult.totalEvaluation,
+      sp500AtTarget: lastResult.sp500Evaluation,
+      goldAtTarget: lastResult.goldEvaluation,
+      nasdaq100AtTarget: lastResult.nasdaq100Evaluation,
+    },
+  };
+}
