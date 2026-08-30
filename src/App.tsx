@@ -74,7 +74,7 @@ export function App() {
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '16px', fontFamily: 'sans-serif', color: '#333', boxSizing: 'border-box' }}>
       {/* 画面幅（PC/スマホ）に応じた表示切り替え用スタイルの定義 */}
       <style>{`
-        /* 入力欄のズーム防止（16px） */
+        /* 入力欄のズーム防止 */
         input, select {
           font-size: 16px !important;
         }
@@ -83,8 +83,8 @@ export function App() {
         .desktop-only-table { display: table !important; }
         .mobile-only-cards { display: none !important; }
 
-        /* スマホ向け表示（画面幅 768px 未満） */
-        @media (max-width: 767px) {
+        /* スマホ向け表示（画面幅 600px 未満の時だけカード表示にする） */
+        @media (max-width: 600px) {
           .desktop-only-table { display: none !important; }
           .mobile-only-cards { display: flex !important; }
         }
