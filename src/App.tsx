@@ -85,11 +85,11 @@ export function App() {
         {/* 基本情報（年齢・月数） */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>現在年齢：</span>
+            <span style={{ fontWeight: 'bold', fontSize: '16px' }}>現在年齢：</span>
             <select
               value={input.currentAgeYears}
               onChange={(e) => handleInputChange('top', 'currentAgeYears', e.target.value)}
-              style={{ padding: '6px 8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ccc' }}
+              style={{ padding: '6px 8px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' }}
             >
               {Array.from({ length: 43 }, (_, i) => i + 18).map((age) => (
                 <option key={age} value={age}>
@@ -100,7 +100,7 @@ export function App() {
             <select
               value={input.currentAgeMonths}
               onChange={(e) => handleInputChange('top', 'currentAgeMonths', e.target.value)}
-              style={{ padding: '6px 8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ccc' }}
+              style={{ padding: '6px 8px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' }}
             >
               {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                 <option key={m} value={m}>
