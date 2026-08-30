@@ -368,14 +368,9 @@ export function App() {
                 formatter={(value) => [value != null ? `${Number(value).toLocaleString()} 円` : '0 円']}
                 labelFormatter={(label) => `${label}歳`}
               />
-              <Legend
-                wrapperStyle={{ fontSize: '12px' }}
-                payload={[
-                  { value: 'S&P500', type: 'rect', color: '#8884d8' },
-                  { value: 'ゴールド', type: 'rect', color: '#ffc658' },
-                  { value: 'NASDAQ100', type: 'rect', color: '#82ca9d' },
-                ]}
-              />
+              {/* payloadの直接指定を外します */}
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              {/* Barの順番通りに凡例も並びます */}
               <Bar dataKey="sp500Evaluation" name="S&P500" stackId="a" fill="#8884d8" />
               <Bar dataKey="goldEvaluation" name="ゴールド" stackId="a" fill="#ffc658" />
               <Bar dataKey="nasdaq100Evaluation" name="NASDAQ100" stackId="a" fill="#82ca9d" />
