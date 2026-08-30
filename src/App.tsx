@@ -369,7 +369,7 @@ export function App() {
       {/* ■ 一覧テーブル */}
       <section style={{ width: '100%' }}>
         <h2 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <TableIcon size={18} /> 年次一覧テーブル
+          <TableIcon size={18} /> 年別資産推移
         </h2>
         <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>
           <table style={{ width: '100%', minWidth: '500px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '12px' }}>
